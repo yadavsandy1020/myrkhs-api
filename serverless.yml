@@ -1,0 +1,126 @@
+service: myrkhs
+package:
+  individually: true
+
+custom:
+  bucket: "${self:service}-${self:provider.stage}-profilepicture"
+provider:
+  name: aws
+  runtime: nodejs10.x
+  memorySize: 128
+  timeout: 3
+  stage: ${opt:stage, 'dev'}
+  environment:
+    MEMBERS_TABLE: "${self:service}-${self:provider.stage}-members"
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "*"
+
+functions:
+  #Lambda function to fetch save delete and update the ngo members
+  getmembers:
+    handler: members/get/index.handler
+    package:
+      exclude:
+        - uploadphoto
+        - members/post
+        - members/delete
+        - members/update
+      include:
+        - members/get
+    description: lambda to fetch ngos members
+    events:
+      - http:
+          path: /get-members
+          method: get
+          cors: true
+
+  savemember:
+    handler: members/post/index.handler
+    package:
+      exclude:
+        - uploadphoto
+        - members/get
+        - members/delete
+        - members/update
+      include:
+        - members/post
+    description: lambda to add ngos member
+    events:
+      - http:
+          path: /add-member
+          method: post
+          cors: true
+
+  deletemember:
+    handler: members/delete/index.handler
+    package:
+      exclude:
+        - uploadphoto
+        - members/get
+        - members/post
+        - members/update
+      include:
+        - members/delete
+    description: lambda to delete ngos member
+    events:
+      - http:
+          path: /delete-member/{id}
+          method: delete
+          cors: true
+
+  updatemember:
+    handler: members/update/index.handler
+    package:
+      exclude:
+        - uploadphoto
+        - members/get
+        - members/post
+        - members/delete
+      include:
+        - members/update
+    description: lambda to update ngos member
+    events:
+      - http:
+          path: /update-member/{id}
+          method: PUT
+          cors: true
+  #===========================================================
+  #Lambda function to handle the profile upload
+  uploadphoto:
+    handler: uploadphoto/index.handler
+    package:
+      exclude:
+        - members/**
+      include:
+        - uploadphoto
+    description: lambda to upload member profile photo
+    events:
+      - s3:
+          bucket: ${self:custom.bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .png
+
+resources:
+  Resources:
+    MembersDBTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 4
+          WriteCapacityUnits: 4
+        TableName: ${self:provider.environment.MEMBERS_TABLE}
