@@ -3,24 +3,23 @@
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const params = {
+  TableName: process.env.MEMBERS_TABLE,
+};
 
-module.exports.delete = (event, context, callback) => {
-  const params = {
-    TableName: process.env.DYNAMODB_TABLE,
-    Key: {
-      id: event.pathParameters.id,
-    }, 
-  };
-
-  // delete the member from the database
-  dynamoDb.delete(params, (error) => {
+module.exports.handler = (event, context, callback) => {
+  // fetch all members from the database
+  dynamoDb.scan(params, (error, result) => {
     // handle potential errors
     if (error) {
       console.error(error);
       callback(null, {
         statusCode: error.statusCode || 501,
         headers: { 'Content-Type': 'text/plain' },
-        body: 'Couldn\'t remove the member.',
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: 'Couldn\'t fetch the members.',
       });
       return;
     }
@@ -28,7 +27,10 @@ module.exports.delete = (event, context, callback) => {
     // create a response
     const response = {
       statusCode: 200,
-      body: JSON.stringify({}),
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(result.Items),
     };
     callback(null, response);
   });

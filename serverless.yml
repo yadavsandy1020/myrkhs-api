@@ -8,7 +8,7 @@ provider:
   name: aws
   runtime: nodejs10.x
   memorySize: 128
-  timeout: 3
+  timeout: 5
   stage: ${opt:stage, 'dev'}
   environment:
     MEMBERS_TABLE: "${self:service}-${self:provider.stage}-members"
@@ -25,15 +25,15 @@ provider:
 functions:
   #Lambda function to fetch save delete and update the ngo members
   getmembers:
-    handler: members/get/index.handler
+    handler: get/index.handler
     package:
       exclude:
-        - uploadphoto
-        - members/post
-        - members/delete
-        - members/update
+        - uploadphoto/**
+        - post/**
+        - delete/**
+        - update/**
       include:
-        - members/get
+        - get
     description: lambda to fetch ngos members
     events:
       - http:
@@ -42,15 +42,15 @@ functions:
           cors: true
 
   savemember:
-    handler: members/post/index.handler
+    handler: post/index.handler
     package:
       exclude:
-        - uploadphoto
-        - members/get
-        - members/delete
-        - members/update
+        - uploadphoto/**
+        - get/**
+        - delete/**
+        - update/**
       include:
-        - members/post
+        - post
     description: lambda to add ngos member
     events:
       - http:
@@ -59,15 +59,15 @@ functions:
           cors: true
 
   deletemember:
-    handler: members/delete/index.handler
+    handler: delete/index.handler
     package:
       exclude:
-        - uploadphoto
-        - members/get
-        - members/post
-        - members/update
+        - uploadphoto/**
+        - get/**
+        - post/**
+        - update/**
       include:
-        - members/delete
+        - delete
     description: lambda to delete ngos member
     events:
       - http:
@@ -76,15 +76,15 @@ functions:
           cors: true
 
   updatemember:
-    handler: members/update/index.handler
+    handler: update/index.handler
     package:
       exclude:
-        - uploadphoto
-        - members/get
-        - members/post
-        - members/delete
+        - uploadphoto/**
+        - get/**
+        - post/**
+        - delete/**
       include:
-        - members/update
+        - update
     description: lambda to update ngos member
     events:
       - http:
@@ -97,7 +97,10 @@ functions:
     handler: uploadphoto/index.handler
     package:
       exclude:
-        - members/**
+        - get/**
+        - post/**
+        - delete/**
+        - update/**
       include:
         - uploadphoto
     description: lambda to upload member profile photo

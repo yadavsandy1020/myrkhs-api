@@ -6,6 +6,9 @@ module.exports.handler = async (event) => {
     body: JSON.stringify(
       {
         message: 'Upload function executed successfully!',
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        },
         input: event,
       },
       null,

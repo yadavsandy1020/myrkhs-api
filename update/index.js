@@ -14,29 +14,39 @@ module.exports.update = (event, context, callback) => {
     callback(null, {
       statusCode: 400,
       headers: { 'Content-Type': 'text/plain' },
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: 'Couldn\'t update the member.',
     });
     return;
   }
 
   const params = {
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: process.env.MEMBERS_TABLE,
     Key: {
       id: event.pathParameters.id,
     },
     ExpressionAttributeNames: {
-      '#todo_text': 'text',
+      '#member_name': 'name',
+      '#member_email': 'email',
+      '#member_mobile': 'mobile',
+      '#member_designation': 'designation',
+      '#member_about': 'about',
     },
     ExpressionAttributeValues: {
-      ':text': data.text,
-      ':checked': data.checked,
+      ':name': data.name,
+      ':email': data.email,
+      ':mobile': data.mobile,
+      ':designation': data.designation,
+      ':about': data.about,
       ':updatedAt': timestamp,
     },
-    UpdateExpression: 'SET #todo_text = :text, checked = :checked, updatedAt = :updatedAt',
+    UpdateExpression: 'SET #member_text = :name, email = :email, mobile = :mobile, designation = :designation, about = :about, updatedAt = :updatedAt',
     ReturnValues: 'ALL_NEW',
   };
 
-  // update the todo in the database
+  // update the member in the database
   dynamoDb.update(params, (error, result) => {
     // handle potential errors
     if (error) {
@@ -44,6 +54,9 @@ module.exports.update = (event, context, callback) => {
       callback(null, {
         statusCode: error.statusCode || 501,
         headers: { 'Content-Type': 'text/plain' },
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        },
         body: 'Couldn\'t fetch the member.',
       });
       return;
@@ -52,6 +65,9 @@ module.exports.update = (event, context, callback) => {
     // create a response
     const response = {
       statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify(result.Attributes),
     };
     callback(null, response);
