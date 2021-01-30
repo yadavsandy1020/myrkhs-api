@@ -12,6 +12,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   environment:
     MEMBERS_TABLE: "${self:service}-${self:provider.stage}-members"
+    PROFILE_BUCKET: "${self:custom.bucket}"
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -92,24 +93,6 @@ functions:
           method: PUT
           cors: true
   #===========================================================
-  #Lambda function to handle the profile upload
-  uploadphoto:
-    handler: uploadphoto/index.handler
-    package:
-      exclude:
-        - get/**
-        - post/**
-        - delete/**
-        - update/**
-      include:
-        - uploadphoto
-    description: lambda to upload member profile photo
-    events:
-      - s3:
-          bucket: ${self:custom.bucket}
-          event: s3:ObjectCreated:*
-          rules:
-            - suffix: .png
 
 resources:
   Resources:
@@ -127,3 +110,23 @@ resources:
           ReadCapacityUnits: 4
           WriteCapacityUnits: 4
         TableName: ${self:provider.environment.MEMBERS_TABLE}
+
+    UploadBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucket}
+        
+    UploadBucketAllowPublicReadPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: UploadBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action:
+                - 's3:GetObject'
+              Resource: arn:aws:s3:::${self:custom.bucket}/*
