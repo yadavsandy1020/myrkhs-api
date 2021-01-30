@@ -32,7 +32,7 @@ module.exports.handler = (event, context, callback) => {
         },
         body: JSON.stringify(params.Item),
       };
-      return response
+      callback(null, response);
     }, err => {
       return {
         statusCode: err.statusCode || 501,
@@ -41,7 +41,8 @@ module.exports.handler = (event, context, callback) => {
           'Access-Control-Allow-Origin': '*'
         },
         body: 'Couldn\'t create the member.',
-      };)
+      };
+    })
   })
 }
 
@@ -82,7 +83,6 @@ const saveDataInDB = async (photo, data) => {
       updatedAt: timestamp,
     },
   };
-
   try {
     console.log('trying to save in db...')
     await dynamoDb.put(params).promise();
